@@ -123,7 +123,7 @@ class WebCamera(ConnectWorker):
             if ret:
                 img = cv2.resize(img, (0, 0), fx=self.scaling, fy=self.scaling, interpolation=cv2.INTER_AREA)
                 frame.data['img'] = img
-                cv2.imshow('img', img)
+                cv2.imshow(self.name, img)
                 cv2.waitKey(1)
             else:
                 self.off_line += 1
