@@ -3,6 +3,8 @@ import time
 import serial
 import cv2
 import numpy as np
+import platform
+from bleak import BleakClient
 
 from pipeline.core import Worker, Frame
 
@@ -91,7 +93,7 @@ class PortConnect(ConnectWorker):
 
 
 class WebCamera(ConnectWorker):
-    def __init__(self, name, url: str, interval: float = 1, scaling: float = 0.25):
+    def __init__(self, name, url: str, interval: float = 1, scaling: float = 0.25, dip: int = 360, fps: int = 1):
         super().__init__(name)
         self.url = url
         self.camera = None
@@ -99,6 +101,8 @@ class WebCamera(ConnectWorker):
         self.last_time = time.time() + self.interval
         self.scaling = scaling
         self.off_line = 0
+        self.dip = dip
+        self.fps = fps
 
     def listening(self):
         try:        # 尝试连接摄像头
@@ -112,6 +116,8 @@ class WebCamera(ConnectWorker):
                 return False    # 如果该摄像头没打开，表示连接失败
             else:
                 print('摄像头连接成功!')
+                self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.dip)
+                self.camera.set(cv2.CAP_PROP_FPS, self.fps)
                 return True     # 否则连接成功
         except Exception as e:  # 异常处理
             print(e)            # 打印异常信息
@@ -123,8 +129,6 @@ class WebCamera(ConnectWorker):
             if ret:
                 img = cv2.resize(img, (0, 0), fx=self.scaling, fy=self.scaling, interpolation=cv2.INTER_AREA)
                 frame.data['img'] = img
-                cv2.imshow(self.name, img)
-                cv2.waitKey(1)
             else:
                 self.off_line += 1
                 print('模块{}：摄像头{}第{}次读取失败'.format(self.name, self.url, self.off_line))
@@ -138,6 +142,21 @@ class WebCamera(ConnectWorker):
         return frame
 
 
+class BLEConnect(ConnectWorker):
+    def __init__(self, name: str = 'ble_connect', uddi: str = "00002a37-0000-1000-8000-00805f9b34fb", addr: str = "8C:CE:4E:A5:C2:E6"):
+        super().__init__(name)
+        self.uddi = uddi
+        self.addr = addr
+
+    def listening(self):
+        try:
+            pass
+        except Exception as e:
+            print(e)
+            return False
+
+
+
 if __name__ == '__main__':
     from pipeline.core import Node, NodeSet
     from pipeline.utils import Source, PrintData, Save
@@ -148,7 +167,7 @@ if __name__ == '__main__':
     wc3 = Node('dot3', worker=WebCamera('web_camera3', 'rtsp://admin:a1234567@192.168.111.6:554/stream1'), source='dot3')    # 教室
     MulIgnition([wc1, wc2, wc3]).run()
 
-    # task = NodeSet(dots=[
+    # ig_task = NodeSet(dots=[
     #     Node('head', subsequents=['bwt901cl_listener'], worker=Source()),
     #     Node(worker=PortListener('bwt901cl_listener', port='com11'), subsequents=['bwt', 'save'], send_mod='copy'),
     #     Node(worker=BWT901CL('bwt'), subsequents=['print']),
@@ -158,4 +177,4 @@ if __name__ == '__main__':
     #
     # for i in range(100):
     #     frame = Frame(end='head')
-    #     task.run(frame)
+    #     ig_task.run(frame)

@@ -1,9 +1,12 @@
-import task.task1
+import cv2
+
+import ig_task.task1
 import pipeline
+import flask
 
 
 if __name__ == '__main__':
-    pipeline.mul.MulIgnition(task.task1.all_cameras).run()
-    # task = pipeline.core.Node(name='load', worker=pipeline.utils.Load())
+    a = ig_task.task1.get_img_push()
     # while True:
-    #     a = task.run(pipeline.core.Frame())
+    #     a.run(pipeline.core.Frame(end='classroom'))
+    pipeline.mul.MulIgnition(a).run()
